@@ -76,3 +76,30 @@ pytest tests/
 Bidding zones used:
 - `DK1` — Denmark West (connected to Germany/Netherlands)
 - `DK2` — Denmark East (connected to Sweden/Germany)
+
+## Results
+
+### Forecasting Model (XGBoost)
+Evaluated with 5-fold time-series cross-validation (no random splits — temporal order is always respected):
+
+| Metric    | DK1   | DK2   |
+|-----------|-------|-------|
+| Mean MAE  | ~39 EUR/MWh | ~39 EUR/MWh |
+| Mean MAE% | ~27% of mean price | ~27% of mean price |
+
+### Backtest (out-of-sample, last 25% of data)
+Simple spread strategy: buy 6 cheapest forecast hours, sell 6 most expensive per day.
+
+| Metric         | DK1      | DK2      |
+|----------------|----------|----------|
+| Total PnL      | €55,809  | €56,095  |
+| Avg daily PnL  | €308     | €310     |
+| Win rate       | 88.9%    | 86.7%    |
+| Sharpe ratio   | 29.87    | 28.63    |
+| Max drawdown   | €-109    | €-181    |
+
+### Known limitations
+- The Sharpe ratio is unrealistically high. The PnL calculation uses the actual daily mean price as a reference, which is only known at end-of-day — a form of residual look-ahead bias.
+- Transaction costs and bid-ask spreads are not modelled.
+- The strategy is simple by design. A real trading strategy would require more sophisticated signal generation and risk management.
+- `rolling_mean_24h` dominates feature importance (~65%), meaning the model largely predicts "tomorrow looks like today." This is a reasonable baseline but not a sophisticated forecast.
